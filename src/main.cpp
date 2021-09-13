@@ -49,7 +49,7 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Computer Graphics Project", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -78,7 +78,7 @@ int main()
 
     // Shaders
     // -------------------------
-//    Shader shader("resources/shaders/cubemaps.vs", "resources/shaders/cubemaps.fs"); //TODO
+    Shader cubeShader("resources/shaders/cube.vs", "resources/shaders/cube.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
@@ -173,16 +173,16 @@ int main()
     };
 
     // cube VAO TODO
-//    unsigned int cubeVAO, cubeVBO;
-//    glGenVertexArrays(1, &cubeVAO);
-//    glGenBuffers(1, &cubeVBO);
-//    glBindVertexArray(cubeVAO);
-//    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-//    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
-//    glEnableVertexAttribArray(0);
-//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-//    glEnableVertexAttribArray(1);
-//    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    unsigned int cubeVAO, cubeVBO;
+    glGenVertexArrays(1, &cubeVAO);
+    glGenBuffers(1, &cubeVBO);
+    glBindVertexArray(cubeVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
     // skybox VAO
     unsigned int skyboxVAO, skyboxVBO;
@@ -197,7 +197,7 @@ int main()
     // load textures
     // -------------
     //TODO
-    //unsigned int cubeTexture = loadTexture(FileSystem::getPath("resources/textures/container.jpg").c_str());
+    unsigned int cubeTexture = loadTexture(FileSystem::getPath("resources/textures/lava.jpg").c_str());
 
     vector<std::string> skyboxSides
             {
@@ -212,8 +212,8 @@ int main()
 
     // shader configuration
     // --------------------
-//    shader.use();
-//    shader.setInt("texture1", 0);
+    cubeShader.use();
+    cubeShader.setInt("texture1", 0);
 
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
@@ -239,18 +239,18 @@ int main()
 
         //TODO
 //         draw scene as normal
-//        shader.use();
+        cubeShader.use();
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-//        shader.setMat4("model", model);
-//        shader.setMat4("view", view);
-//        shader.setMat4("projection", projection);
-//        // cubes
-//        glBindVertexArray(cubeVAO);
-//        glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL_TEXTURE_2D, cubeTexture);
-//        glDrawArrays(GL_TRIANGLES, 0, 36);
+        cubeShader.setMat4("model", model);
+        cubeShader.setMat4("view", view);
+        cubeShader.setMat4("projection", projection);
+        // cubes
+        glBindVertexArray(cubeVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
 
         // draw skybox as last
@@ -275,9 +275,9 @@ int main()
 
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
-//    glDeleteVertexArrays(1, &cubeVAO);    TODO kad ubacimo kocku otkomentarisati
+    glDeleteVertexArrays(1, &cubeVAO);
     glDeleteVertexArrays(1, &skyboxVAO);
-//    glDeleteBuffers(1, &cubeVBO);         TODO kad ubacimo kocku otkomentarisati
+    glDeleteBuffers(1, &cubeVBO);
     glDeleteBuffers(1, &skyboxVAO);
 
     glfwTerminate();

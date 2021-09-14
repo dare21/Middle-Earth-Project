@@ -257,7 +257,7 @@ int main()
     // floor shader
     // -------------
     // load textures
-    unsigned int floorTexture = loadTexture(FileSystem::getPath("resources/textures/lava.jpg").c_str());
+    unsigned int floorTexture = loadTexture(FileSystem::getPath("resources/textures/middle_earth.jpg").c_str());
     // shader configuration
     floorShader.use();
     floorShader.setInt("texture1", 0);
@@ -357,6 +357,7 @@ int main()
 
         // render floor
         glBindVertexArray(floorVAO);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, floorTexture);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 

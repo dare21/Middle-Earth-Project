@@ -220,7 +220,7 @@ int main()
 
     // load textures
     // -------------
-    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/obsidian.jpg").c_str());
+    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/stone.jpg").c_str());
     unsigned int specularMap = loadTexture(FileSystem::getPath("resources/textures/lava.jpg").c_str());
 
     // shader configuration

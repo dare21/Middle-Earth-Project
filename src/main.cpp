@@ -133,6 +133,19 @@ int main()
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
     };
 
+    // positions of 9 cubes
+    glm::vec3 cubePositions[] = {
+            glm::vec3(4.0f,  0.0f,  2.0f),
+            glm::vec3(4.0f,  0.0f,  2.5f),
+            glm::vec3(4.0f,  0.0f,  3.0f),
+            glm::vec3(4.0f,  0.0f,  3.5f),
+            glm::vec3(4.0f,  0.0f,  4.0f),
+            glm::vec3(4.0f,  0.0f,  4.5f),
+            glm::vec3(4.0f,  0.0f,  5.0f),
+            glm::vec3(4.0f,  0.0f,  5.5f),
+            glm::vec3(4.0f,  0.0f,  6.0f),
+    };
+
     float pyramidVertices[] = {
          // positions         // normals           // texture coords
          1.0f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,    //A
@@ -377,9 +390,18 @@ int main()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, specularMap);
 
-        // render the cube
+        // loop used for rendering the cubes
         glBindVertexArray(cubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for (unsigned int i = 0; i < 9; i++)
+        {
+            // calculate the model matrix for each object and pass it to shader before drawing
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            model = glm::scale(model, glm::vec3(0.3f));
+            lightingShader.setMat4("model", model);
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
 
         // light cube (lamp object) shader setup

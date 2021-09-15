@@ -318,6 +318,8 @@ int main()
 
         // world transformation
         glm::mat4 model = glm::mat4(1.0f);
+//TODO otkomentarisati za postavljanje kocke u Mordor
+//        model = glm::translate(model, glm::vec3(6.5f, 0.0f, 4.5f));
         lightingShader.setMat4("model", model);
 
         // view/projection transformations
@@ -346,7 +348,7 @@ int main()
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, -0.51f, 0.0f));
         model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(30.0f));
+        model = glm::scale(model, glm::vec3(25.0f));
         floorShader.setMat4("model", model);
 
         // view/projection transformations
@@ -359,7 +361,10 @@ int main()
         glBindVertexArray(floorVAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, floorTexture);
+        glEnable(GL_CULL_FACE);     // floor won't be visible if looked from bellow
+        glCullFace(GL_BACK);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        glDisable(GL_CULL_FACE);
 
 
         // light cube (lamp object) shader setup

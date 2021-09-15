@@ -81,6 +81,7 @@ int main()
     // -------------------------
     Shader lightCubeShader("resources/shaders/light_cube.vs", "resources/shaders/light_cube.fs");
     Shader lightingShader("resources/shaders/lighting_maps.vs", "resources/shaders/lighting_maps.fs");
+    Shader pyramidShader("resources/shaders/lighting_maps.vs", "resources/shaders/lighting_maps.fs");
     Shader floorShader("resources/shaders/lighting_maps.vs", "resources/shaders/lighting_maps.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
 
@@ -132,8 +133,25 @@ int main()
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
     };
 
+    float pyramidVertices[] = {
+         // positions         // normals           // texture coords
+         1.0f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,    //A
+         0.0f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,    //B
+        -1.0f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,    //C
+         0.0f, -1.0f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,    //D
+         0.0f,  0.0f,  2.0f,  0.0f,  0.0f,  1.0f,  0.5f,  0.5f,	   //E
+    };
+    unsigned int pyramidIndices[] = {
+         0, 1, 3,	//ABD
+         1, 2, 3,	//BDC
+         0, 1, 4,	//ABE
+         0, 3, 4,	//ADE
+         2, 3, 4,	//CDE
+         1, 2, 4,	//BCE
+    };
+
     float floorVertices[] = {
-        // positions          // normals        // texture coords
+        // positions          // normals          // texture coords
          0.5f,  0.5f,  0.0f,  0.0f, 0.0f, -1.0f,  1.0f,  1.0f,  // top right
          0.5f, -0.5f,  0.0f,  0.0f, 0.0f, -1.0f,  1.0f,  0.0f,  // bottom right
         -0.5f, -0.5f,  0.0f,  0.0f, 0.0f, -1.0f,  0.0f,  0.0f,  // bottom left
@@ -189,13 +207,13 @@ int main()
          1.0f, -1.0f,  1.0f
     };
 
-    // Obsidian cube
-    unsigned int VBO, cubeVAO;
+    // Cube
+    unsigned int cubeVBO, cubeVAO;
     glGenVertexArrays(1, &cubeVAO);
-    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &cubeVBO);
 
     glBindVertexArray(cubeVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
@@ -210,10 +228,29 @@ int main()
     glGenVertexArrays(1, &lightCubeVAO);
 
     glBindVertexArray(lightCubeVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
+
+    // Pyramid
+    unsigned int pyramidVAO, pyramidVBO, pyramidEBO;
+    glGenVertexArrays(1, &pyramidVAO);
+    glGenBuffers(1, &pyramidVBO);
+    glGenBuffers(1, &pyramidEBO);
+
+    glBindVertexArray(pyramidVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, pyramidVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(pyramidVertices), pyramidVertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pyramidEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(pyramidIndices), pyramidIndices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     // Floor
     unsigned int floorVAO, floorVBO, floorEBO;
@@ -257,9 +294,17 @@ int main()
     lightingShader.setInt("material.diffuse", 0);
     lightingShader.setInt("material.specular", 1);
 
+    //pyramid shader
+    unsigned int pyramidDiffuseMap = diffuseMap;   //loadTexture(FileSystem::getPath("resources/textures/stone.jpg").c_str());
+    unsigned int pyramidSpecularMap = specularMap;   //loadTexture(FileSystem::getPath("resources/textures/lava.jpg").c_str());
+    pyramidShader.use();
+    pyramidShader.setInt("material.diffuse", 0);
+    pyramidShader.setInt("material.specular", 1);
+
+
     // floor shader
     unsigned int floorDiffuseMap = loadTexture(FileSystem::getPath("resources/textures/middle_earth.jpg").c_str());
-    unsigned int floorSpecularMap = loadTexture(FileSystem::getPath("resources/textures/lava.jpg").c_str());
+    unsigned int floorSpecularMap = specularMap;   //loadTexture(FileSystem::getPath("resources/textures/lava.jpg").c_str());
     floorShader.use();
     floorShader.setInt("material.diffuse", 0);
     floorShader.setInt("material.specular", 1);
@@ -317,8 +362,6 @@ int main()
 
         // world transformation
         glm::mat4 model = glm::mat4(1.0f);
-//TODO otkomentarisati za postavljanje kocke u Mordor
-//        model = glm::translate(model, glm::vec3(6.5f, 0.0f, 4.5f));
         lightingShader.setMat4("model", model);
 
         // view/projection transformations
@@ -337,6 +380,64 @@ int main()
         // render the cube
         glBindVertexArray(cubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+        // light cube (lamp object) shader setup
+        // -----------
+        lightCubeShader.use();
+
+        // world transformation
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
+        lightCubeShader.setMat4("model", model);
+
+        // view/projection transformations
+        lightCubeShader.setMat4("projection", projection);
+        lightCubeShader.setMat4("view", view);
+
+        // render the light cube
+        glBindVertexArray(lightCubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+        // pyramid shader setup
+        // -----------
+        pyramidShader.use();
+        pyramidShader.setVec3("light.position", lightPos);
+        pyramidShader.setVec3("viewPos", camera.Position);
+
+        // light properties
+        pyramidShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+        pyramidShader.setVec3("light.diffuse", 0.3f, 0.3f, 0.3f);
+        pyramidShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
+        // material properties
+        pyramidShader.setFloat("material.shininess", 32.0f);
+
+        // world transformation
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(5.15f, -0.5f, 4.0f));
+        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(-1.0f, 0.0, 0.0f));
+        model = glm::scale(model, glm::vec3(0.45f, 0.45f, 0.65f));
+        pyramidShader.setMat4("model", model);
+
+        // view/projection transformations
+        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        view = camera.GetViewMatrix();
+        pyramidShader.setMat4("projection", projection);
+        pyramidShader.setMat4("view", view);
+
+        // bind diffuse map
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, pyramidDiffuseMap);
+        // bind specular map
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, pyramidSpecularMap);
+
+        // render pyramid
+        glBindVertexArray(pyramidVAO);
+        glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, nullptr);
 
 
         // floor shader setup
@@ -381,21 +482,6 @@ int main()
         glDisable(GL_CULL_FACE);
 
 
-        // light cube (lamp object) shader setup
-        // -----------
-        lightCubeShader.use();
-        lightCubeShader.setMat4("projection", projection);
-        lightCubeShader.setMat4("view", view);
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
-        lightCubeShader.setMat4("model", model);
-
-        // render the light cube
-        glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
         // skybox shader setup
         // -----------
         glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
@@ -422,10 +508,16 @@ int main()
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
     glDeleteVertexArrays(1, &cubeVAO);
-    glDeleteVertexArrays(1, &skyboxVAO);
     glDeleteVertexArrays(1, &lightCubeVAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &skyboxVAO);
+    glDeleteVertexArrays(1, &pyramidVAO);
+    glDeleteVertexArrays(1, &floorVAO);
+    glDeleteVertexArrays(1, &skyboxVAO);
+    glDeleteBuffers(1, &cubeVBO);
+    glDeleteBuffers(1, &pyramidVBO);
+    glDeleteBuffers(1, &pyramidEBO);
+    glDeleteBuffers(1, &floorVBO);
+    glDeleteBuffers(1, &floorEBO);
+    glDeleteBuffers(1, &skyboxVBO);
 
     glfwTerminate();
     return 0;

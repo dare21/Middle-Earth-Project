@@ -50,7 +50,7 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Computer Graphics Project", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Middle-Earth", nullptr, nullptr);
     if (window == nullptr)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -79,12 +79,8 @@ int main()
 
     // Shaders
     // -------------------------
-    Shader lightCubeShader("resources/shaders/light_cube.vs", "resources/shaders/light_cube.fs");
-    Shader lightingShader("resources/shaders/lighting_maps.vs", "resources/shaders/lighting_maps.fs");
-    Shader pyramidShader("resources/shaders/lighting_maps.vs", "resources/shaders/lighting_maps.fs");
-    Shader floorShader("resources/shaders/lighting_maps.vs", "resources/shaders/lighting_maps.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
-
+    Shader lightshowShader("resources/shaders/lightshow.vs", "resources/shaders/lightshow.fs");
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -135,15 +131,15 @@ int main()
 
     // positions of 9 cubes
     glm::vec3 cubePositions[] = {
-            glm::vec3(4.0f,  0.0f,  2.0f),
-            glm::vec3(4.0f,  0.0f,  2.5f),
-            glm::vec3(4.0f,  0.0f,  3.0f),
-            glm::vec3(4.0f,  0.0f,  3.5f),
-            glm::vec3(4.0f,  0.0f,  4.0f),
-            glm::vec3(4.0f,  0.0f,  4.5f),
-            glm::vec3(4.0f,  0.0f,  5.0f),
-            glm::vec3(4.0f,  0.0f,  5.5f),
-            glm::vec3(4.0f,  0.0f,  6.0f),
+        glm::vec3(4.0f,  0.0f,  2.0f),
+        glm::vec3(4.0f,  0.0f,  2.5f),
+        glm::vec3(4.0f,  0.0f,  3.0f),
+        glm::vec3(4.0f,  0.0f,  3.5f),
+        glm::vec3(4.0f,  0.0f,  4.0f),
+        glm::vec3(4.0f,  0.0f,  4.5f),
+        glm::vec3(4.0f,  0.0f,  5.0f),
+        glm::vec3(4.0f,  0.0f,  5.5f),
+        glm::vec3(4.0f,  0.0f,  6.0f),
     };
 
     float pyramidVertices[] = {
@@ -236,16 +232,6 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    // Light cube
-    unsigned int lightCubeVAO;
-    glGenVertexArrays(1, &lightCubeVAO);
-
-    glBindVertexArray(lightCubeVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-
     // Pyramid
     unsigned int pyramidVAO, pyramidVBO, pyramidEBO;
     glGenVertexArrays(1, &pyramidVAO);
@@ -300,29 +286,22 @@ int main()
     // loading textures into shaders
     // -------------
 
-    // lighting shader
+    // lightshow textures
     unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/stone.jpg").c_str());
     unsigned int specularMap = loadTexture(FileSystem::getPath("resources/textures/lava.jpg").c_str());
-    lightingShader.use();
-    lightingShader.setInt("material.diffuse", 0);
-    lightingShader.setInt("material.specular", 1);
+    lightshowShader.use();
+    lightshowShader.setInt("material.diffuse", 0);
+    lightshowShader.setInt("material.specular", 1);
 
-    //pyramid shader
+    //pyramid textures
     unsigned int pyramidDiffuseMap = diffuseMap;   //loadTexture(FileSystem::getPath("resources/textures/stone.jpg").c_str());
     unsigned int pyramidSpecularMap = specularMap;   //loadTexture(FileSystem::getPath("resources/textures/lava.jpg").c_str());
-    pyramidShader.use();
-    pyramidShader.setInt("material.diffuse", 0);
-    pyramidShader.setInt("material.specular", 1);
 
-
-    // floor shader
+    // floor textures
     unsigned int floorDiffuseMap = loadTexture(FileSystem::getPath("resources/textures/middle_earth.jpg").c_str());
     unsigned int floorSpecularMap = specularMap;   //loadTexture(FileSystem::getPath("resources/textures/lava.jpg").c_str());
-    floorShader.use();
-    floorShader.setInt("material.diffuse", 0);
-    floorShader.setInt("material.specular", 1);
 
-    // skybox shader
+    // skybox textures
     vector<std::string> skyboxSides = {
         FileSystem::getPath("resources/textures/mordor_skybox/hot_rt.png"),
         FileSystem::getPath("resources/textures/mordor_skybox/hot_lf.png"),
@@ -356,33 +335,39 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-        // lighting
-        glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-
-        // lighting shader setup
+        // lightshowShader
         // -----------
-        lightingShader.use();
-        lightingShader.setVec3("light.position", lightPos);
-        lightingShader.setVec3("viewPos", camera.Position);
+        lightshowShader.use();
+        lightshowShader.setVec3("viewPos", camera.Position);
+        lightshowShader.setFloat("material.shininess", 32.0f);
 
-        // light properties
-        lightingShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-        lightingShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
-        lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+        // directional light setup
+        lightshowShader.setVec3("dirLight.direction", 1.0f, -0.5f, 0.0f);
+        lightshowShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+        lightshowShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+        lightshowShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
-        // material properties
-        lightingShader.setFloat("material.shininess", 64.0f);
-
-        // world transformation
-        glm::mat4 model = glm::mat4(1.0f);
-        lightingShader.setMat4("model", model);
+        // spotlight setup
+        lightshowShader.setVec3("spotLight.position", camera.Position);
+        lightshowShader.setVec3("spotLight.direction", camera.Front);
+        lightshowShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+        lightshowShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+        lightshowShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+        lightshowShader.setFloat("spotLight.constant", 1.0f);
+        lightshowShader.setFloat("spotLight.linear", 0.09);
+        lightshowShader.setFloat("spotLight.quadratic", 0.032);
+        lightshowShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+        lightshowShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        lightingShader.setMat4("projection", projection);
-        lightingShader.setMat4("view", view);
+        lightshowShader.setMat4("projection", projection);
+        lightshowShader.setMat4("view", view);
 
+        glm::mat4 model;
+
+        // cubes
         // bind diffuse map
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuseMap);
@@ -390,65 +375,30 @@ int main()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, specularMap);
 
-        // loop used for rendering the cubes
         glBindVertexArray(cubeVAO);
         for (unsigned int i = 0; i < 9; i++)
         {
-            // calculate the model matrix for each object and pass it to shader before drawing
-            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
             model = glm::scale(model, glm::vec3(0.3f));
-            lightingShader.setMat4("model", model);
+            lightshowShader.setMat4("model", model);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
 
-        // light cube (lamp object) shader setup
-        // -----------
-        lightCubeShader.use();
-
-        // world transformation
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
-        lightCubeShader.setMat4("model", model);
-
-        // view/projection transformations
-        lightCubeShader.setMat4("projection", projection);
-        lightCubeShader.setMat4("view", view);
-
-        // render the light cube
-        glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
-        // pyramid shader setup
-        // -----------
-        pyramidShader.use();
-        pyramidShader.setVec3("light.position", lightPos);
-        pyramidShader.setVec3("viewPos", camera.Position);
-
+        // pyramid
         // light properties
-        pyramidShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-        pyramidShader.setVec3("light.diffuse", 0.3f, 0.3f, 0.3f);
-        pyramidShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-
-        // material properties
-        pyramidShader.setFloat("material.shininess", 32.0f);
+        lightshowShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+        lightshowShader.setVec3("light.diffuse", 0.3f, 0.3f, 0.3f);
+        lightshowShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
         // world transformation
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(5.15f, -0.5f, 4.0f));
         model = glm::rotate(model, glm::radians(90.0f), glm::vec3(-1.0f, 0.0, 0.0f));
         model = glm::scale(model, glm::vec3(0.45f, 0.45f, 0.65f));
-        pyramidShader.setMat4("model", model);
-
-        // view/projection transformations
-        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        view = camera.GetViewMatrix();
-        pyramidShader.setMat4("projection", projection);
-        pyramidShader.setMat4("view", view);
+        lightshowShader.setMat4("model", model);
 
         // bind diffuse map
         glActiveTexture(GL_TEXTURE0);
@@ -462,32 +412,21 @@ int main()
         glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, nullptr);
 
 
-        // floor shader setup
-        // -----------
-        floorShader.use();
-        floorShader.setVec3("light.position", lightPos);
-        floorShader.setVec3("viewPos", camera.Position);
-
+        // floor
         // light properties
-        floorShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-        floorShader.setVec3("light.diffuse", 0.3f, 0.3f, 0.3f);
-        floorShader.setVec3("light.specular", 0.8f, 0.8f, 0.8f);
+        lightshowShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+        lightshowShader.setVec3("light.diffuse", 0.3f, 0.3f, 0.3f);
+        lightshowShader.setVec3("light.specular", 0.4f, 0.4f, 0.4f);
 
         // material properties
-        floorShader.setFloat("material.shininess", 64.0f);
+        lightshowShader.setFloat("material.shininess", 128.0f);
 
         // world transformation
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, -0.51f, 0.0f));
         model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         model = glm::scale(model, glm::vec3(25.0f));
-        floorShader.setMat4("model", model);
-
-        // view/projection transformations
-        view = camera.GetViewMatrix();
-        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        floorShader.setMat4("view", view);
-        floorShader.setMat4("projection", projection);
+        lightshowShader.setMat4("model", model);
 
         // bind diffuse map
         glActiveTexture(GL_TEXTURE0);
@@ -530,7 +469,6 @@ int main()
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
     glDeleteVertexArrays(1, &cubeVAO);
-    glDeleteVertexArrays(1, &lightCubeVAO);
     glDeleteVertexArrays(1, &pyramidVAO);
     glDeleteVertexArrays(1, &floorVAO);
     glDeleteVertexArrays(1, &skyboxVAO);

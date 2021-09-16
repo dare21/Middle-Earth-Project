@@ -12,6 +12,7 @@
 #include <learnopengl/model.h>
 
 #include <iostream>
+#include <rg/Error.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -287,6 +288,9 @@ int main()
     // -------------
 
     // lightshow textures
+    unsigned int ringSpecularRed = loadTexture(FileSystem::getPath("resources/objects/ring/Ring_Light.fw.png").c_str());
+    unsigned int ringSpecularShine = loadTexture(FileSystem::getPath("resources/objects/ring/Ring_Mesh.fw.png_specular.jpg").c_str());
+
     unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/stone.jpg").c_str());
     unsigned int specularMap = loadTexture(FileSystem::getPath("resources/textures/lava.jpg").c_str());
     lightshowShader.use();
@@ -315,6 +319,10 @@ int main()
     skyboxShader.setInt("skybox", 0);
 
 
+    Model ring(FileSystem::getPath("resources/objects/ring/The One Ring.FBX"));
+    ring.SetShaderTextureNamePrefix("material.");
+
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -339,25 +347,25 @@ int main()
         // -----------
         lightshowShader.use();
         lightshowShader.setVec3("viewPos", camera.Position);
-        lightshowShader.setFloat("material.shininess", 32.0f);
+        lightshowShader.setFloat("material.shininess", 16.0f);
 
         // directional light setup
         lightshowShader.setVec3("dirLight.direction", 1.0f, -0.5f, 0.0f);
         lightshowShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
         lightshowShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-        lightshowShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+        lightshowShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
 
         // spotlight setup
         lightshowShader.setVec3("spotLight.position", camera.Position);
         lightshowShader.setVec3("spotLight.direction", camera.Front);
         lightshowShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-        lightshowShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+        lightshowShader.setVec3("spotLight.diffuse", 0.8f, 0.8f, 0.8f);
         lightshowShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
         lightshowShader.setFloat("spotLight.constant", 1.0f);
-        lightshowShader.setFloat("spotLight.linear", 0.09);
-        lightshowShader.setFloat("spotLight.quadratic", 0.032);
-        lightshowShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-        lightshowShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+        lightshowShader.setFloat("spotLight.linear", 0.05);
+        lightshowShader.setFloat("spotLight.quadratic", 0.012);
+        lightshowShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(10.5f)));
+        lightshowShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(13.0f)));
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -365,7 +373,7 @@ int main()
         lightshowShader.setMat4("projection", projection);
         lightshowShader.setMat4("view", view);
 
-        glm::mat4 model;
+        glm::mat4 model(1.0f);
 
         // cubes
         // bind diffuse map
@@ -378,6 +386,7 @@ int main()
         glBindVertexArray(cubeVAO);
         for (unsigned int i = 0; i < 9; i++)
         {
+            // world transformation
             model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
             model = glm::scale(model, glm::vec3(0.3f));
@@ -388,16 +397,11 @@ int main()
 
 
         // pyramid
-        // light properties
-        lightshowShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-        lightshowShader.setVec3("light.diffuse", 0.3f, 0.3f, 0.3f);
-        lightshowShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-
         // world transformation
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(5.15f, -0.5f, 4.0f));
         model = glm::rotate(model, glm::radians(90.0f), glm::vec3(-1.0f, 0.0, 0.0f));
-        model = glm::scale(model, glm::vec3(0.45f, 0.45f, 0.65f));
+        model = glm::scale(model, glm::vec3(0.45f, 0.45f, 0.8f));
         lightshowShader.setMat4("model", model);
 
         // bind diffuse map
@@ -412,14 +416,34 @@ int main()
         glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, nullptr);
 
 
+        // ring
+        // material properties
+        lightshowShader.setFloat("material.shininess", 2.0f);
+
+        // world transformations
+        model = glm::mat4(1.0f);
+//        model = glm::translate(model, glm::vec3())
+        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f));
+//        /* uncomment for faster rotation */
+//        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f));
+//        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f));
+        model = glm::scale(model, glm::vec3(0.005f));
+        lightshowShader.setMat4("model", model);
+
+        // bind specular map
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, ringSpecularRed);
+
+        // render ring
+        ring.Draw(lightshowShader);
+
+
         // floor
         // light properties
-        lightshowShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-        lightshowShader.setVec3("light.diffuse", 0.3f, 0.3f, 0.3f);
-        lightshowShader.setVec3("light.specular", 0.4f, 0.4f, 0.4f);
+        lightshowShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
         // material properties
-        lightshowShader.setFloat("material.shininess", 128.0f);
+        lightshowShader.setFloat("material.shininess", 256.0f);
 
         // world transformation
         model = glm::mat4(1.0f);

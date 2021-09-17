@@ -24,6 +24,8 @@ unsigned int loadCubemap(vector<std::string> faces);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+bool blinn = false;
+bool blinnKeyPressed = false;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -348,6 +350,7 @@ int main()
         lightshowShader.use();
         lightshowShader.setVec3("viewPos", camera.Position);
         lightshowShader.setFloat("material.shininess", 16.0f);
+        lightshowShader.setInt("blinn", blinn);
 
         // directional light setup
         lightshowShader.setVec3("dirLight.direction", 1.0f, -0.5f, 0.0f);
@@ -522,6 +525,17 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !blinnKeyPressed)
+    {
+        blinn = !blinn;
+        blinnKeyPressed = true;
+        cout << "Blinn-Phong" << endl;
+    }
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE)
+    {
+        blinnKeyPressed = false;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes

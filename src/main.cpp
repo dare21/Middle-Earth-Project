@@ -12,7 +12,7 @@
 #include <learnopengl/model.h>
 
 #include <iostream>
-#include <rg/Error.h>
+#include <cmath>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -28,7 +28,7 @@ bool blinn = false;
 bool blinnKeyPressed = false;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(6.0f, 1.0f, 12.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -130,19 +130,6 @@ int main()
          0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
         -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
-    };
-
-    // positions of 9 cubes
-    glm::vec3 cubePositions[] = {
-        glm::vec3(4.0f,  0.0f,  2.0f),
-        glm::vec3(4.0f,  0.0f,  2.5f),
-        glm::vec3(4.0f,  0.0f,  3.0f),
-        glm::vec3(4.0f,  0.0f,  3.5f),
-        glm::vec3(4.0f,  0.0f,  4.0f),
-        glm::vec3(4.0f,  0.0f,  4.5f),
-        glm::vec3(4.0f,  0.0f,  5.0f),
-        glm::vec3(4.0f,  0.0f,  5.5f),
-        glm::vec3(4.0f,  0.0f,  6.0f),
     };
 
     float pyramidVertices[] = {
@@ -334,6 +321,7 @@ int main()
         auto currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+        float time = currentFrame;
 
         // input
         // -----
@@ -387,22 +375,32 @@ int main()
         glBindTexture(GL_TEXTURE_2D, specularMap);
 
         glBindVertexArray(cubeVAO);
+
+        glm::vec3 pyramidPosition(5.15f, -0.5f, 4.0f);
+        float increment = M_PI_2 / 9;
+        float angle = -M_PI_4/2;
+        float radius = 2.5;
+
         for (unsigned int i = 0; i < 9; i++)
         {
             // world transformation
+            glm::vec3 nazgulPosition(-1.0f + radius*cos(angle), -0.6f, -0.5f + radius*sin(angle));
+            glm::vec3 moving(cos(time), cos(time), cos(time));
+            glm::vec3 translateVector = (pyramidPosition - nazgulPosition) * moving;
             model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
+            model = glm::translate(model, translateVector);
             model = glm::scale(model, glm::vec3(0.3f));
             lightshowShader.setMat4("model", model);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
+            angle += increment;
         }
 
 
         // pyramid
         // world transformation
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(5.15f, -0.5f, 4.0f));
+        model = glm::translate(model, pyramidPosition);
         model = glm::rotate(model, glm::radians(90.0f), glm::vec3(-1.0f, 0.0, 0.0f));
         model = glm::scale(model, glm::vec3(0.45f, 0.45f, 0.8f));
         lightshowShader.setMat4("model", model);
@@ -426,7 +424,7 @@ int main()
         // world transformations
         model = glm::mat4(1.0f);
 //        model = glm::translate(model, glm::vec3())
-        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f));
+        model = glm::rotate(model, time, glm::vec3(1.0f));
 //        /* uncomment for faster rotation */
 //        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f));
 //        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f));

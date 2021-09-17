@@ -14,6 +14,8 @@
 #include <iostream>
 #include <cmath>
 
+#define NAZGULS 9
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -28,7 +30,8 @@ bool blinn = false;
 bool blinnKeyPressed = false;
 
 // camera
-Camera camera(glm::vec3(6.0f, 1.0f, 12.0f));
+Camera camera(glm::vec3(-6.0f, 1.0f, 12.0f));
+//Camera camera(glm::vec3(0.0f, 20.0f, 5.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -377,23 +380,34 @@ int main()
         glBindVertexArray(cubeVAO);
 
         glm::vec3 pyramidPosition(5.15f, -0.5f, 4.0f);
-        float increment = M_PI_2 / 9;
+        float angleDifference = M_PI_2 / 8;
         float angle = -M_PI_4/2;
         float radius = 2.5;
+        float x = 1;
 
-        for (unsigned int i = 0; i < 9; i++)
+        for (unsigned int i = 1; i <= NAZGULS; i++)
         {
+            // a few needed variables
+            float trigConstant = time * x * (float)i + (float)i;    // trial and error, this formula shows good results
+            float c = 4.5f * (sin(trigConstant) - 1.0f);    // there was an idea about this formula but i lost it...
+            glm::vec3 nazgulDirection(-1.0f + radius*cos(angle), -0.6f, -0.5f + radius * sin(angle));   // sets nazguls in an arch around the tower
+            glm::vec3 nazgulLevitate(0, 0.3f*cos(time), 0); // nazguls move up and down, simulating flying
+            glm::vec3 nazgulPosition = pyramidPosition - nazgulDirection + nazgulLevitate;
+            glm::vec3 moving(x, 0.0f, 1 - x);   // nazguls will move in a straight line, each by his own directional vector
+            glm::vec3 advancedMoving(0.1f * cos(time), 0, 0.1f * cos(time));    // nazguls move a bit wiggly, not in a straight line anymore
+            float deep = i > 3 && i < 8 ? 2.0f : 1.0f;  // middle nazguls should go further
+            glm::vec3 translateVector = nazgulPosition + c*(deep*moving + advancedMoving);
+
             // world transformation
-            glm::vec3 nazgulPosition(-1.0f + radius*cos(angle), -0.6f, -0.5f + radius*sin(angle));
-            glm::vec3 moving(cos(time), cos(time), cos(time));
-            glm::vec3 translateVector = (pyramidPosition - nazgulPosition) * moving;
             model = glm::mat4(1.0f);
             model = glm::translate(model, translateVector);
             model = glm::scale(model, glm::vec3(0.3f));
             lightshowShader.setMat4("model", model);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
-            angle += increment;
+
+            angle += angleDifference;
+            x -= 1.0f / NAZGULS;
         }
 
 
@@ -423,7 +437,7 @@ int main()
 
         // world transformations
         model = glm::mat4(1.0f);
-//        model = glm::translate(model, glm::vec3())
+//        model = glm::translate(model, ringPosition)
         model = glm::rotate(model, time, glm::vec3(1.0f));
 //        /* uncomment for faster rotation */
 //        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f));

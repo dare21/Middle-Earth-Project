@@ -13,3 +13,4 @@ The project contains:
   * **Arrow keys**: move the ring forwards, backwards, left and right
   * **M**: move the ring up
   * **N**: move the ring down
+  * **V**: switch spot light on/off

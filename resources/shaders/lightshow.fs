@@ -53,6 +53,7 @@ uniform PointLight pointLight;
 uniform SpotLight spotLight;
 uniform Material material;
 uniform bool blinn;
+uniform bool flashLight;
 
 // function prototypes
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
@@ -76,7 +77,8 @@ void main()
     // phase 2: point light
     result += CalcPointLight(pointLight, norm, FragPos, viewDir);
     // phase 3: spot light
-    result += CalcSpotLight(spotLight, norm, FragPos, viewDir);    
+    if (flashLight)
+        result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
     
     FragColor = vec4(result, 1.0);
 }

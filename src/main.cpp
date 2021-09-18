@@ -31,6 +31,8 @@ const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 bool blinn = false;
 bool blinnKeyPressed = false;
+bool flashLight = false;
+bool flashLightKeyPressed = false;
 
 // camera
 Camera camera(glm::vec3(8.0f, 3.0f, 10.0f));
@@ -354,6 +356,7 @@ int main()
         lightshowShader.setVec3("viewPos", camera.Position);
         lightshowShader.setFloat("material.shininess", 16.0f);
         lightshowShader.setInt("blinn", blinn);
+        lightshowShader.setInt("flashLight", flashLight);
 
         // directional light setup
         lightshowShader.setVec3("dirLight.direction", 1.0f, -0.5f, 0.0f);
@@ -584,7 +587,7 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
         moveRing(DOWN);
 
-    // switch Blinn-Phong lightinh model on/off
+    // switch Blinn-Phong lighting model on/off
     if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !blinnKeyPressed)
     {
         blinn = !blinn;
@@ -597,6 +600,17 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE)
     {
         blinnKeyPressed = false;
+    }
+
+    // switch Spot light on/off
+    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS && !flashLightKeyPressed)
+    {
+        flashLight = !flashLight;
+        flashLightKeyPressed = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_RELEASE)
+    {
+        flashLightKeyPressed = false;
     }
 }
 

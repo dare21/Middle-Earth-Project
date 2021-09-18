@@ -27,8 +27,8 @@ void moveRing(Camera_Movement direction);
 bool ringDestroyed();
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 bool blinn = false;
 bool blinnKeyPressed = false;
 
@@ -87,13 +87,14 @@ int main()
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
-    // Shaders
+    // Shader initialization
     // -------------------------
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
     Shader lightshowShader("resources/shaders/lightshow.vs", "resources/shaders/lightshow.fs");
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
+    // cube coordinates
     float vertices[] = {
         // positions          // normals           // texture coords
         -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
@@ -139,6 +140,7 @@ int main()
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
     };
 
+    // pyramid coordinates
     float pyramidVertices[] = {
          // positions         // normals           // texture coords
          1.0f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,    //A
@@ -147,6 +149,7 @@ int main()
          0.0f, -1.0f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,    //D
          0.0f,  0.0f,  2.0f,  0.0f,  0.0f,  1.0f,  0.5f,  0.5f,	   //E
     };
+
     unsigned int pyramidIndices[] = {
          0, 1, 3,	//ABD
          1, 2, 3,	//BDC
@@ -156,6 +159,7 @@ int main()
          1, 2, 4,	//BCE
     };
 
+    // floor plain coordinates
     float floorVertices[] = {
         // positions          // normals          // texture coords
          0.5f,  0.5f,  0.0f,  0.0f, 0.0f, -1.0f,  1.0f,  1.0f,  // top right
@@ -163,11 +167,14 @@ int main()
         -0.5f, -0.5f,  0.0f,  0.0f, 0.0f, -1.0f,  0.0f,  0.0f,  // bottom left
         -0.5f,  0.5f,  0.0f,  0.0f, 0.0f, -1.0f,  0.0f,  1.0f   // top left
     };
+
+    // floor vertices for use in EBO
     unsigned int floorIndices[] = {
          0, 1, 3,  // first Triangle
          1, 2, 3   // second Triangle
     };
 
+    // skybox coordinates
     float skyboxVertices[] = {
         // positions
         -1.0f,  1.0f, -1.0f,
@@ -213,7 +220,7 @@ int main()
          1.0f, -1.0f,  1.0f
     };
 
-    // Cube
+    // Cube setup
     unsigned int cubeVBO, cubeVAO;
     glGenVertexArrays(1, &cubeVAO);
     glGenBuffers(1, &cubeVBO);
@@ -229,7 +236,7 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    // Pyramid
+    // Pyramid setup
     unsigned int pyramidVAO, pyramidVBO, pyramidEBO;
     glGenVertexArrays(1, &pyramidVAO);
     glGenBuffers(1, &pyramidVBO);
@@ -248,7 +255,7 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    // Floor
+    // Floor setup
     unsigned int floorVAO, floorVBO, floorEBO;
     glGenVertexArrays(1, &floorVAO);
     glGenBuffers(1, &floorVBO);
@@ -267,7 +274,7 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    // Skybox
+    // Skybox setup
     unsigned int skyboxVAO, skyboxVBO;
     glGenVertexArrays(1, &skyboxVAO);
     glGenBuffers(1, &skyboxVBO);
@@ -295,12 +302,12 @@ int main()
     lightshowShader.setInt("material.specular2", 2);
 
     //pyramid textures
-    unsigned int pyramidDiffuseMap = diffuseMap;   //loadTexture(FileSystem::getPath("resources/textures/stone.jpg").c_str());
-    unsigned int pyramidSpecularMap = specularMap;   //loadTexture(FileSystem::getPath("resources/textures/lava.jpg").c_str());
+    unsigned int pyramidDiffuseMap = diffuseMap;
+    unsigned int pyramidSpecularMap = specularMap;
 
     // floor textures
     unsigned int floorDiffuseMap = loadTexture(FileSystem::getPath("resources/textures/middle_earth.jpg").c_str());
-    unsigned int floorSpecularMap = specularMap;   //loadTexture(FileSystem::getPath("resources/textures/lava.jpg").c_str());
+    unsigned int floorSpecularMap = specularMap;
 
     // skybox textures
     vector<std::string> skyboxSides = {
@@ -315,7 +322,7 @@ int main()
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
 
-
+    // load model
     Model ring(FileSystem::getPath("resources/objects/ring/The One Ring.FBX"));
     ring.SetShaderTextureNamePrefix("material.");
 
@@ -341,7 +348,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-        // lightshowShader
+        // lightshowShader setup
         // -----------
         lightshowShader.use();
         lightshowShader.setVec3("viewPos", camera.Position);
@@ -387,17 +394,20 @@ int main()
         // bind diffuse map
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuseMap);
+
         // bind specular map
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, specularMap);
 
         glBindVertexArray(cubeVAO);
 
+        // nazgul(cube) movement/position components
         float angleDifference = M_PI_2 / 8;
         float angle = -M_PI_4/2;
         float radius = 2.5;
         float x = 1;
 
+        // nazgul(cube) render loop
         for (unsigned int i = 1; i <= NAZGULS; i++)
         {
             // a few needed variables
@@ -424,8 +434,7 @@ int main()
         }
 
 
-        // pyramid
-        // world transformation
+        // pyramid setup
         model = glm::mat4(1.0f);
         model = glm::translate(model, pyramidPosition);
         model = glm::rotate(model, glm::radians(90.0f), glm::vec3(-1.0f, 0.0, 0.0f));
@@ -435,6 +444,7 @@ int main()
         // bind diffuse map
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, pyramidDiffuseMap);
+
         // bind specular map
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, pyramidSpecularMap);
@@ -443,8 +453,7 @@ int main()
         glBindVertexArray(pyramidVAO);
         glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, nullptr);
 
-
-        // ring
+        // ring setup
         // material properties
         lightshowShader.setFloat("material.shininess", 2.0f);
 
@@ -452,6 +461,7 @@ int main()
         model = glm::mat4(1.0f);
         model = glm::translate(model, ringPosition);
         model = glm::rotate(model, time, glm::vec3(1.0f));
+
         /* uncomment for faster rotation */
         model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f));
         model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f));
@@ -472,7 +482,7 @@ int main()
         glBindTexture(GL_TEXTURE_2D, 0);
 
 
-        // floor
+        // floor setup
         // light properties
         lightshowShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
@@ -489,6 +499,7 @@ int main()
         // bind diffuse map
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, floorDiffuseMap);
+
         // bind specular map
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, floorSpecularMap);
@@ -537,6 +548,7 @@ int main()
     glDeleteBuffers(1, &floorEBO);
     glDeleteBuffers(1, &skyboxVBO);
 
+    // destroy all remaining windows/cursors, free any allocated resources
     glfwTerminate();
     return 0;
 }
@@ -557,6 +569,7 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
 
+    // catch ring movement
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
         moveRing(FORWARD);
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
@@ -571,11 +584,15 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
         moveRing(DOWN);
 
+    // switch Blinn-Phong lightinh model on/off
     if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !blinnKeyPressed)
     {
         blinn = !blinn;
         blinnKeyPressed = true;
-        cout << "Blinn-Phong" << endl;
+        if (blinn)
+            cout << "Blinn-Phong" << endl;
+        else
+            cout << "Phong" << endl;
     }
     if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE)
     {
@@ -697,6 +714,7 @@ unsigned int loadCubemap(vector<std::string> faces)
     return textureID;
 }
 
+// ring movement
 void moveRing(Camera_Movement direction)
 {
     float velocity = 2.5f * deltaTime;
@@ -728,6 +746,7 @@ void moveRing(Camera_Movement direction)
     }
 }
 
+// check if the ring has reached Mordor
 bool ringDestroyed()
 {
     glm::vec3 difference = abs(pyramidPosition - ringPosition);

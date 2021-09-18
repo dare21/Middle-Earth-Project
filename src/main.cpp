@@ -12,6 +12,7 @@
 #include <learnopengl/model.h>
 
 #include <iostream>
+#include <cstdlib>
 #include <cmath>
 
 #define NAZGULS 9
@@ -22,6 +23,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 unsigned int loadTexture(const char *path);
 unsigned int loadCubemap(vector<std::string> faces);
+void moveRing(Camera_Movement direction);
+bool ringDestroyed();
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -30,8 +33,7 @@ bool blinn = false;
 bool blinnKeyPressed = false;
 
 // camera
-Camera camera(glm::vec3(-6.0f, 1.0f, 12.0f));
-//Camera camera(glm::vec3(0.0f, 20.0f, 5.0f));
+Camera camera(glm::vec3(8.0f, 3.0f, 10.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -40,6 +42,8 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+glm::vec3 ringPosition(-6.0f, 0.2f, -5.6f);
+glm::vec3 pyramidPosition(5.15f, -0.5f, 4.0f);
 
 int main()
 {
@@ -288,6 +292,7 @@ int main()
     lightshowShader.use();
     lightshowShader.setInt("material.diffuse", 0);
     lightshowShader.setInt("material.specular", 1);
+    lightshowShader.setInt("material.specular2", 2);
 
     //pyramid textures
     unsigned int pyramidDiffuseMap = diffuseMap;   //loadTexture(FileSystem::getPath("resources/textures/stone.jpg").c_str());
@@ -345,15 +350,24 @@ int main()
 
         // directional light setup
         lightshowShader.setVec3("dirLight.direction", 1.0f, -0.5f, 0.0f);
-        lightshowShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+        lightshowShader.setVec3("dirLight.ambient", 0.01f, 0.01f, 0.01f);
         lightshowShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
         lightshowShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
+
+        // point light setup
+        lightshowShader.setVec3("pointLight.position", ringPosition);
+        lightshowShader.setVec3("pointLight.ambient", 0.01f, 0.01f, 0.01f);
+        lightshowShader.setVec3("pointLight.diffuse", 0.8f, 0.8f, 0.8f);
+        lightshowShader.setVec3("pointLight.specular", 1.0f, 1.0f, 1.0f);
+        lightshowShader.setFloat("pointLight.constant", 1.0f);
+        lightshowShader.setFloat("pointLight.linear", 0.05f);
+        lightshowShader.setFloat("pointLight.quadratic", 0.012f);
 
         // spotlight setup
         lightshowShader.setVec3("spotLight.position", camera.Position);
         lightshowShader.setVec3("spotLight.direction", camera.Front);
         lightshowShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-        lightshowShader.setVec3("spotLight.diffuse", 0.8f, 0.8f, 0.8f);
+        lightshowShader.setVec3("spotLight.diffuse", 0.7f, 0.7f, 0.7f);
         lightshowShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
         lightshowShader.setFloat("spotLight.constant", 1.0f);
         lightshowShader.setFloat("spotLight.linear", 0.05);
@@ -379,7 +393,6 @@ int main()
 
         glBindVertexArray(cubeVAO);
 
-        glm::vec3 pyramidPosition(5.15f, -0.5f, 4.0f);
         float angleDifference = M_PI_2 / 8;
         float angle = -M_PI_4/2;
         float radius = 2.5;
@@ -437,20 +450,26 @@ int main()
 
         // world transformations
         model = glm::mat4(1.0f);
-//        model = glm::translate(model, ringPosition)
+        model = glm::translate(model, ringPosition);
         model = glm::rotate(model, time, glm::vec3(1.0f));
-//        /* uncomment for faster rotation */
-//        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f));
-//        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f));
+        /* uncomment for faster rotation */
+        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f));
+        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f));
         model = glm::scale(model, glm::vec3(0.005f));
         lightshowShader.setMat4("model", model);
 
-        // bind specular map
+        // bind ring textures
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, ringSpecularRed);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, ringSpecularShine);
 
         // render ring
         ring.Draw(lightshowShader);
+
+        // unbind ring texture
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, 0);
 
 
         // floor
@@ -537,6 +556,20 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        moveRing(FORWARD);
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        moveRing(BACKWARD);
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        moveRing(LEFT);
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        moveRing(RIGHT);
+
+    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)
+        moveRing(UP);
+    if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
+        moveRing(DOWN);
 
     if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !blinnKeyPressed)
     {
@@ -662,4 +695,42 @@ unsigned int loadCubemap(vector<std::string> faces)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     return textureID;
+}
+
+void moveRing(Camera_Movement direction)
+{
+    float velocity = 2.5f * deltaTime;
+    glm::vec3 yLock(1.0f, 0.0f, 1.0f);
+    glm::vec3 yMove(0.0f, 1.0f, 0.0f);
+
+    if (direction == FORWARD)
+        ringPosition += camera.Front * velocity * yLock;
+    if (direction == BACKWARD)
+        ringPosition -= camera.Front * velocity * yLock;
+    if (direction == LEFT)
+        ringPosition -= camera.Right * velocity * yLock;
+    if (direction == RIGHT)
+        ringPosition += camera.Right * velocity * yLock;
+
+    if (direction == UP)
+        ringPosition += velocity * yMove;
+    if (direction == DOWN)
+        ringPosition -= velocity * yMove;
+
+    if (ringPosition.y < 0.0f)
+        ringPosition.y = 0.0f;
+    else if (ringPosition.y > 3.0f)
+        ringPosition.y = 3.0f;
+
+    if (ringDestroyed()) {
+        cout << "The Ring has been destroyed!" << endl;
+        exit(EXIT_SUCCESS);
+    }
+}
+
+bool ringDestroyed()
+{
+    glm::vec3 difference = abs(pyramidPosition - ringPosition);
+    glm::vec3 criticalArea = glm::vec3(0.1f);
+    return difference.x < criticalArea.x && difference.z < criticalArea.z;
 }

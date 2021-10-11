@@ -24,6 +24,7 @@ void processInput(GLFWwindow *window);
 unsigned int loadTexture(const char *path);
 unsigned int loadCubemap(vector<std::string> faces);
 void moveRing(Camera_Movement direction);
+void checkRingBounds();
 bool ringCollision(glm::vec3& objectPosition);
 
 // settings
@@ -755,15 +756,51 @@ void moveRing(Camera_Movement direction)
     if (direction == DOWN)
         ringPosition -= velocity * yMove;
 
-    if (ringPosition.y < 0.0f)
-        ringPosition.y = 0.0f;
-    else if (ringPosition.y > 3.0f)
-        ringPosition.y = 3.0f;
+    checkRingBounds();
 
     // check if the ring has reached Mordor
     if (ringCollision(pyramidPosition)) {
         cout << "The Ring has been destroyed!" << endl;
         exit(EXIT_SUCCESS);
+    }
+}
+
+void checkRingBounds()
+{
+    if (ringPosition.y < 0.0f)
+        ringPosition.y = 0.0f;
+    else if (ringPosition.y > 3.0f)
+        ringPosition.y = 3.0f;
+
+    if (ringPosition.x < -8.5f)
+        ringPosition.x = -8.5f;
+    else if (ringPosition.x > 7.0f)
+        ringPosition.x = 7.0f;
+
+    if (ringPosition.z < -9.0f)
+        ringPosition.z = -9.0f;
+    else if (ringPosition.z > 6.0f)
+        ringPosition.z = 6.0f;
+
+    if (ringPosition.x > 4.0f && ringPosition.z < 3.0f) {
+        if (abs(ringPosition.x - 4.0f) > abs(ringPosition.z - 3.0f))
+            ringPosition.z = 3.0f;
+        else
+            ringPosition.x = 4.0f;
+    }
+
+    if (ringPosition.x < -5.0f && ringPosition.z > 0.7f) {
+        if (abs(ringPosition.x + 5.0f) > abs(ringPosition.z - 0.7f))
+            ringPosition.z = 0.7f;
+        else
+            ringPosition.x = -5.0f;
+    }
+
+    if (ringPosition.x < -6.5f && ringPosition.z > -1.5f) {
+        if (abs(ringPosition.x + 6.5f) > abs(ringPosition.z + 1.5f))
+            ringPosition.z = -1.5f;
+        else
+            ringPosition.x = -6.5f;
     }
 }
 

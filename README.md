@@ -1,4 +1,4 @@
-# Computer_graphics_project
+# Middle-Earth-Project
 This project is a C++ program created using OpenGL, GLFW, GLM and Glad.
 
 The project contains:

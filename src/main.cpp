@@ -24,7 +24,7 @@ void processInput(GLFWwindow *window);
 unsigned int loadTexture(const char *path);
 unsigned int loadCubemap(vector<std::string> faces);
 void moveRing(Camera_Movement direction);
-bool ringDestroyed();
+bool ringCollision(glm::vec3& objectPosition);
 
 // settings
 const unsigned int SCR_WIDTH = 1920;
@@ -44,7 +44,8 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-glm::vec3 ringPosition(-6.0f, 0.2f, -5.6f);
+glm::vec3 hobbitonPosition(-6.0f, 0.2f, -5.6f);
+glm::vec3 ringPosition = hobbitonPosition;
 glm::vec3 pyramidPosition(5.15f, -0.5f, 4.0f);
 
 int main()
@@ -432,6 +433,11 @@ int main()
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
+            if (ringCollision(translateVector)) {
+                cout << "The Ring has been captured, try again!" << endl;
+                ringPosition = hobbitonPosition;
+            }
+
             angle += angleDifference;
             x -= 1.0f / NAZGULS;
         }
@@ -731,7 +737,7 @@ unsigned int loadCubemap(vector<std::string> faces)
 // ring movement
 void moveRing(Camera_Movement direction)
 {
-    float velocity = 2.5f * deltaTime;
+    float velocity = 3.0f * deltaTime;
     glm::vec3 yLock(1.0f, 0.0f, 1.0f);
     glm::vec3 yMove(0.0f, 1.0f, 0.0f);
 
@@ -754,16 +760,16 @@ void moveRing(Camera_Movement direction)
     else if (ringPosition.y > 3.0f)
         ringPosition.y = 3.0f;
 
-    if (ringDestroyed()) {
+    // check if the ring has reached Mordor
+    if (ringCollision(pyramidPosition)) {
         cout << "The Ring has been destroyed!" << endl;
         exit(EXIT_SUCCESS);
     }
 }
 
-// check if the ring has reached Mordor
-bool ringDestroyed()
+bool ringCollision(glm::vec3& objectPosition)
 {
-    glm::vec3 difference = abs(pyramidPosition - ringPosition);
-    glm::vec3 criticalArea = glm::vec3(0.1f);
+    glm::vec3 difference = abs(objectPosition - ringPosition);
+    glm::vec3 criticalArea = glm::vec3(0.2f);
     return difference.x < criticalArea.x && difference.z < criticalArea.z;
 }
